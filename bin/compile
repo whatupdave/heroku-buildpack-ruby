@@ -8,6 +8,40 @@ require "language_pack"
 
 if pack = LanguagePack.detect(ARGV[0], ARGV[1])
   pack.log("compile") do
+    build_path, cache_path = ARGV
+
+    system %Q{
+# LZOP
+if test -f #{cache_path}/lzop
+then
+    echo "-----> Skipping LZOP"
+else
+    echo "-----> Building LZO"
+    cd #{cache_path}
+    curl http://www.oberhumer.com/opensource/lzo/download/lzo-2.06.tar.gz | tar xz
+    cd lzo-2.06
+    ./configure optflags="-O3"
+    make
+    echo " done"
+
+    echo "-----> Building LZOP"
+    cd #{cache_path}
+    curl http://www.lzop.org/download/lzop-1.03.tar.gz | tar xz
+    cd lzop-1.03
+    ./configure --prefix=/usr/local optflags="-O3" CPPFLAGS="-I/#{cache_path}/lzo-2.06/include" LDFLAGS="-L/#{cache_path}/lzo-2.06/src/.libs"
+    make
+    cp src/lzop #{cache_path}/lzop
+    cp src/lzop #{build_path}/bin/lzop
+    echo " done"
+
+    echo "-----> Cleaning up"
+    rm -rf #{cache_path}/lzo-2.06
+    rm -rf #{cache_path}/lzop-1.03
+    echo "done"
+fi
+cp #{cache_path}/lzop #{build_path}/bin/lzop
+    }
+
     pack.compile
   end
 end
