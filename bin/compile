@@ -40,6 +40,8 @@ else
     echo "done"
 fi
 cp #{cache_path}/lzop #{build_path}/bin/lzop
+
+gem install bundler --pre
     }
 
     pack.compile
